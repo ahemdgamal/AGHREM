@@ -1,0 +1,1028 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AGHREM - شبكتك الاجتماعية</title>
+    <style>
+        /* متغيرات الألوان */
+        :root {
+            --primary: #1877f2;
+            --primary-dark: #0d6efd;
+            --secondary: #42b72a;
+            --bg-color: #f0f2f5;
+            --card-bg: #ffffff;
+            --text-primary: #1c1e21;
+            --text-secondary: #65676b;
+            --border-color: #dddfe2;
+            --hover-color: #f2f2f2;
+            --shadow: 0 2px 4px rgba(0, 0, 0, .1), 0 8px 16px rgba(0, 0, 0, .1);
+        }
+
+        /* التنسيق العام */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            direction: rtl;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 15px;
+        }
+
+        /* الشريط العلوي */
+        header {
+            background-color: var(--card-bg);
+            box-shadow: var(--shadow);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .navbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+        }
+
+        .logo h1 {
+            color: var(--primary);
+            font-size: 24px;
+            margin-right: 10px;
+        }
+
+        .search-bar {
+            flex: 1;
+            max-width: 500px;
+            margin: 0 20px;
+            position: relative;
+        }
+
+        .search-bar input {
+            width: 100%;
+            padding: 10px 15px;
+            border-radius: 20px;
+            border: 1px solid var(--border-color);
+            background-color: var(--bg-color);
+            font-size: 14px;
+        }
+
+        .nav-icons {
+            display: flex;
+            gap: 15px;
+        }
+
+        .icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .icon:hover {
+            background-color: var(--hover-color);
+        }
+
+        /* المحتوى الرئيسي */
+        .main-content {
+            display: flex;
+            margin-top: 20px;
+            gap: 20px;
+        }
+
+        /* الشريط الجانبي الأيسر */
+        .sidebar-left {
+            width: 25%;
+            background-color: var(--card-bg);
+            border-radius: 8px;
+            box-shadow: var(--shadow);
+            padding: 15px;
+            position: sticky;
+            top: 70px;
+            height: fit-content;
+        }
+
+        .profile-card {
+            text-align: center;
+            padding-bottom: 15px;
+            border-bottom: 1px solid var(--border-color);
+            margin-bottom: 15px;
+        }
+
+        .profile-img {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            margin: 0 auto 10px;
+            background-color: var(--primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 30px;
+            font-weight: bold;
+        }
+
+        .profile-name {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .profile-bio {
+            color: var(--text-secondary);
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+
+        .sidebar-menu {
+            list-style: none;
+        }
+
+        .sidebar-menu li {
+            padding: 10px;
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 5px;
+            transition: background-color 0.3s;
+        }
+
+        .sidebar-menu li:hover {
+            background-color: var(--hover-color);
+        }
+
+        /* منطقة المنشورات */
+        .feed {
+            width: 50%;
+        }
+
+        .create-post {
+            background-color: var(--card-bg);
+            border-radius: 8px;
+            box-shadow: var(--shadow);
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+
+        .post-input {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: var(--primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+        }
+
+        .post-input input {
+            flex: 1;
+            padding: 10px 15px;
+            border-radius: 20px;
+            border: 1px solid var(--border-color);
+            background-color: var(--bg-color);
+        }
+
+        .post-options {
+            display: flex;
+            justify-content: space-around;
+            border-top: 1px solid var(--border-color);
+            padding-top: 10px;
+        }
+
+        .post-option {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            padding: 5px 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .post-option:hover {
+            background-color: var(--hover-color);
+        }
+
+        .post {
+            background-color: var(--card-bg);
+            border-radius: 8px;
+            box-shadow: var(--shadow);
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+
+        .post-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .post-user {
+            font-weight: bold;
+        }
+
+        .post-time {
+            color: var(--text-secondary);
+            font-size: 12px;
+        }
+
+        .post-content {
+            margin-bottom: 15px;
+            line-height: 1.5;
+        }
+
+        .post-image {
+            width: 100%;
+            border-radius: 8px;
+            margin-bottom: 15px;
+        }
+
+        .post-stats {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid var(--border-color);
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+
+        .post-actions {
+            display: flex;
+            justify-content: space-around;
+            padding-top: 10px;
+        }
+
+        .post-action {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            padding: 5px 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .post-action:hover {
+            background-color: var(--hover-color);
+        }
+
+        /* الشريط الجانبي الأيمن */
+        .sidebar-right {
+            width: 25%;
+            background-color: var(--card-bg);
+            border-radius: 8px;
+            box-shadow: var(--shadow);
+            padding: 15px;
+            position: sticky;
+            top: 70px;
+            height: fit-content;
+        }
+
+        .sidebar-title {
+            font-size: 18px;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .contact-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-bottom: 5px;
+            transition: background-color 0.3s;
+        }
+
+        .contact-item:hover {
+            background-color: var(--hover-color);
+        }
+
+        .contact-avatar {
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            background-color: var(--secondary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+        }
+
+        .footer {
+            text-align: center;
+            padding: 20px;
+            margin-top: 30px;
+            color: var(--text-secondary);
+            font-size: 14px;
+            border-top: 1px solid var(--border-color);
+        }
+
+        /* نماذج تسجيل الدخول والتسجيل */
+        .auth-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+        }
+
+        .auth-box {
+            background-color: var(--card-bg);
+            border-radius: 8px;
+            box-shadow: var(--shadow);
+            padding: 30px;
+            width: 400px;
+            max-width: 90%;
+        }
+
+        .auth-title {
+            text-align: center;
+            margin-bottom: 20px;
+            color: var(--primary);
+        }
+
+        .auth-form {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .form-group label {
+            font-weight: 500;
+        }
+
+        .form-group input {
+            padding: 12px;
+            border-radius: 5px;
+            border: 1px solid var(--border-color);
+            font-size: 16px;
+        }
+
+        .auth-button {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 12px;
+            border-radius: 5px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .auth-button:hover {
+            background-color: var(--primary-dark);
+        }
+
+        .auth-switch {
+            text-align: center;
+            margin-top: 15px;
+        }
+
+        .auth-switch a {
+            color: var(--primary);
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .error-message {
+            color: #ff3333;
+            font-size: 14px;
+            margin-top: 5px;
+            display: none;
+        }
+
+        /* صفحات أخرى */
+        .page {
+            display: none;
+            padding: 20px;
+        }
+
+        .page.active {
+            display: block;
+        }
+
+        .page-header {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .back-button {
+            background: none;
+            border: none;
+            font-size: 20px;
+            cursor: pointer;
+        }
+
+        /* الأنيميشن */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.5s ease-in-out;
+        }
+
+        /* التجاوب */
+        @media (max-width: 992px) {
+            .main-content {
+                flex-direction: column;
+            }
+            
+            .sidebar-left, .feed, .sidebar-right {
+                width: 100%;
+            }
+            
+            .sidebar-left, .sidebar-right {
+                position: static;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- صفحة تسجيل الدخول -->
+    <div id="auth-page" class="auth-container">
+        <div class="auth-box fade-in">
+            <h2 class="auth-title">تسجيل الدخول إلى AGHREM</h2>
+            <form id="login-form" class="auth-form">
+                <div class="form-group">
+                    <label for="login-email">البريد الإلكتروني</label>
+                    <input type="email" id="login-email" placeholder="أدخل بريدك الإلكتروني" required>
+                    <div id="login-email-error" class="error-message">البريد الإلكتروني غير صحيح</div>
+                </div>
+                <div class="form-group">
+                    <label for="login-password">كلمة المرور</label>
+                    <input type="password" id="login-password" placeholder="أدخل كلمة المرور" required>
+                    <div id="login-password-error" class="error-message">كلمة المرور غير صحيحة</div>
+                </div>
+                <button type="submit" class="auth-button">تسجيل الدخول</button>
+            </form>
+            <div class="auth-switch">
+                <p>ليس لديك حساب؟ <a href="#" id="show-register">إنشاء حساب جديد</a></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- صفحة التسجيل -->
+    <div id="register-page" class="auth-container" style="display: none;">
+        <div class="auth-box fade-in">
+            <h2 class="auth-title">إنشاء حساب جديد في AGHREM</h2>
+            <form id="register-form" class="auth-form">
+                <div class="form-group">
+                    <label for="register-name">الاسم الكامل</label>
+                    <input type="text" id="register-name" placeholder="أدخل اسمك الكامل" required>
+                </div>
+                <div class="form-group">
+                    <label for="register-email">البريد الإلكتروني</label>
+                    <input type="email" id="register-email" placeholder="أدخل بريدك الإلكتروني" required>
+                    <div id="register-email-error" class="error-message">البريد الإلكتروني غير صالح</div>
+                </div>
+                <div class="form-group">
+                    <label for="register-password">كلمة المرور</label>
+                    <input type="password" id="register-password" placeholder="أنشئ كلمة مرور قوية" required>
+                    <div id="register-password-error" class="error-message">كلمة المرور يجب أن تكون 6 أحرف على الأقل</div>
+                </div>
+                <div class="form-group">
+                    <label for="register-confirm-password">تأكيد كلمة المرور</label>
+                    <input type="password" id="register-confirm-password" placeholder="أعد إدخال كلمة المرور" required>
+                    <div id="register-confirm-error" class="error-message">كلمتا المرور غير متطابقتين</div>
+                </div>
+                <button type="submit" class="auth-button">إنشاء الحساب</button>
+            </form>
+            <div class="auth-switch">
+                <p>لديك حساب بالفعل؟ <a href="#" id="show-login">تسجيل الدخول</a></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- الصفحة الرئيسية -->
+    <div id="main-page" style="display: none;">
+        <header>
+            <div class="container">
+                <div class="navbar">
+                    <div class="logo">
+                        <h1>AGHREM</h1>
+                    </div>
+                    <div class="search-bar">
+                        <input type="text" placeholder="بحث في AGHREM" id="search-input">
+                    </div>
+                    <div class="nav-icons">
+                        <div class="icon" id="home-icon">
+                            <span>🏠</span>
+                        </div>
+                        <div class="icon" id="create-post-icon">
+                            <span>✏️</span>
+                        </div>
+                        <div class="icon" id="profile-icon">
+                            <span>👤</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <div class="container">
+            <div class="main-content">
+                <!-- الشريط الجانبي الأيسر -->
+                <div class="sidebar-left">
+                    <div class="profile-card">
+                        <div class="profile-img">أ</div>
+                        <div class="profile-name">أحمد جمال</div>
+                        <div class="profile-bio">Hello in AGHREM</div>
+                    </div>
+                    <ul class="sidebar-menu">
+                        <li id="menu-profile">
+                            <span>👤</span> الملف الشخصي
+                        </li>
+                        <li id="menu-friends">
+                            <span>👥</span> الأصدقاء
+                        </li>
+                        <li id="menu-groups">
+                            <span>👪</span> المجموعات
+                        </li>
+                        <li id="menu-messages">
+                            <span>💬</span> الرسائل
+                        </li>
+                        <li id="menu-events">
+                            <span>📅</span> الأحداث
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- منطقة المنشورات -->
+                <div class="feed">
+                    <!-- إنشاء منشور جديد -->
+                    <div class="create-post">
+                        <div class="post-input">
+                            <div class="user-avatar">أ</div>
+                            <input type="text" placeholder="ماذا يدور في ذهنك، أحمد؟" id="new-post-text">
+                        </div>
+                        <div class="post-options">
+                            <div class="post-option" id="add-photo">
+                                <span>📷</span> صورة
+                            </div>
+                            <div class="post-option" id="add-video">
+                                <span>🎥</span> فيديو
+                            </div>
+                            <div class="post-option" id="add-feeling">
+                                <span>😊</span> شعور
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- المنشورات -->
+                    <div class="post">
+                        <div class="post-header">
+                            <div class="user-avatar">أ</div>
+                            <div>
+                                <div class="post-user">أحمد جمال</div>
+                                <div class="post-time">منذ 5 دقائق</div>
+                            </div>
+                        </div>
+                        <div class="post-content">
+                            اللهم صلي علي سيدنا محمد
+                        </div>
+                        <div class="post-stats">
+                            <div>100M إعجاب</div>
+                            <div>10K تعليق</div>
+                            <div>5K مشاركة</div>
+                        </div>
+                        <div class="post-actions">
+                            <div class="post-action" id="like-post">
+                                <span>👍</span> أعجبني
+                            </div>
+                            <div class="post-action" id="comment-post">
+                                <span>💬</span> تعليق
+                            </div>
+                            <div class="post-action" id="share-post">
+                                <span>🔄</span> مشاركة
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- الشريط الجانبي الأيمن -->
+                <div class="sidebar-right">
+                    <h3 class="sidebar-title">جهات الاتصال</h3>
+                    <div class="contact-item">
+                        <div class="contact-avatar">م</div>
+                        <div>محمد أحمد</div>
+                    </div>
+                    <div class="contact-item">
+                        <div class="contact-avatar">س</div>
+                        <div>سارة خالد</div>
+                    </div>
+                    <div class="contact-item">
+                        <div class="contact-avatar">ع</div>
+                        <div>علي محمود</div>
+                    </div>
+                    <div class="contact-item">
+                        <div class="contact-avatar">ف</div>
+                        <div>فاطمة عمر</div>
+                    </div>
+                    <div class="contact-item">
+                        <div class="contact-avatar">ي</div>
+                        <div>ياسمين حسن</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="footer">
+            <p>تصميم أحمد جمال | نورتو وشرفتو | Powered by Ahmed Gamal</p>
+            <p>للتواصل واتس اب: 01554547362</p>
+        </div>
+    </div>
+
+    <!-- صفحة البحث -->
+    <div id="search-page" class="page">
+        <div class="page-header">
+            <button class="back-button" id="back-from-search">←</button>
+            <h2>نتائج البحث</h2>
+        </div>
+        <div class="search-results">
+            <!-- سيتم عرض نتائج البحث هنا -->
+        </div>
+    </div>
+
+    <!-- صفحة إنشاء منشور جديد -->
+    <div id="create-post-page" class="page">
+        <div class="page-header">
+            <button class="back-button" id="back-from-create">←</button>
+            <h2>إنشاء منشور جديد</h2>
+        </div>
+        <div class="create-post-full">
+            <div class="post-input">
+                <div class="user-avatar">أ</div>
+                <div>
+                    <div class="post-user">أحمد جمال</div>
+                </div>
+            </div>
+            <textarea id="full-post-text" placeholder="ماذا يدور في ذهنك، أحمد؟" rows="5"></textarea>
+            <div class="post-options">
+                <div class="post-option" id="full-add-photo">
+                    <span>📷</span> إضافة صورة
+                </div>
+                <div class="post-option" id="full-add-video">
+                    <span>🎥</span> إضافة فيديو
+                </div>
+            </div>
+            <button id="publish-post" class="auth-button" style="margin-top: 15px;">نشر</button>
+        </div>
+    </div>
+
+    <!-- صفحة التعليقات -->
+    <div id="comments-page" class="page">
+        <div class="page-header">
+            <button class="back-button" id="back-from-comments">←</button>
+            <h2>التعليقات</h2>
+        </div>
+        <div class="comments-list">
+            <!-- سيتم عرض التعليقات هنا -->
+        </div>
+        <div class="add-comment">
+            <div class="post-input">
+                <div class="user-avatar">أ</div>
+                <input type="text" placeholder="اكتب تعليقًا..." id="new-comment-text">
+            </div>
+            <button id="add-comment-btn" class="auth-button" style="margin-top: 10px;">إضافة تعليق</button>
+        </div>
+    </div>
+
+    <script>
+        // بيانات المستخدمين المخزنة محلياً
+        let users = JSON.parse(localStorage.getItem('aghrem_users')) || [];
+        let currentUser = JSON.parse(localStorage.getItem('aghrem_current_user')) || null;
+        let posts = JSON.parse(localStorage.getItem('aghrem_posts')) || [];
+
+        // تهيئة الحساب الافتراضي
+        if (users.length === 0) {
+            const defaultUser = {
+                id: 1,
+                name: "أحمد جمال",
+                email: "ahemdgamal95@gmail.com",
+                password: "0195377553",
+                bio: "Hello in AGHREM",
+                verified: true
+            };
+            users.push(defaultUser);
+            localStorage.setItem('aghrem_users', JSON.stringify(users));
+            
+            // إنشاء منشور افتراضي
+            const defaultPost = {
+                id: 1,
+                userId: 1,
+                content: "اللهم صلي علي سيدنا محمد",
+                likes: 100000000, // 100M
+                comments: 10000,
+                shares: 5000,
+                timestamp: new Date().toISOString()
+            };
+            posts.push(defaultPost);
+            localStorage.setItem('aghrem_posts', JSON.stringify(posts));
+        }
+
+        // عناصر DOM
+        const authPage = document.getElementById('auth-page');
+        const registerPage = document.getElementById('register-page');
+        const mainPage = document.getElementById('main-page');
+        const searchPage = document.getElementById('search-page');
+        const createPostPage = document.getElementById('create-post-page');
+        const commentsPage = document.getElementById('comments-page');
+
+        const loginForm = document.getElementById('login-form');
+        const registerForm = document.getElementById('register-form');
+        const showRegisterLink = document.getElementById('show-register');
+        const showLoginLink = document.getElementById('show-login');
+
+        const searchInput = document.getElementById('search-input');
+        const homeIcon = document.getElementById('home-icon');
+        const createPostIcon = document.getElementById('create-post-icon');
+        const profileIcon = document.getElementById('profile-icon');
+
+        const backFromSearch = document.getElementById('back-from-search');
+        const backFromCreate = document.getElementById('back-from-create');
+        const backFromComments = document.getElementById('back-from-comments');
+
+        const newPostText = document.getElementById('new-post-text');
+        const fullPostText = document.getElementById('full-post-text');
+        const publishPostBtn = document.getElementById('publish-post');
+
+        const commentPostBtn = document.getElementById('comment-post');
+        const newCommentText = document.getElementById('new-comment-text');
+        const addCommentBtn = document.getElementById('add-comment-btn');
+
+        // التحقق من حالة تسجيل الدخول
+        function checkAuthStatus() {
+            if (currentUser) {
+                showMainPage();
+            } else {
+                showAuthPage();
+            }
+        }
+
+        // عرض صفحة المصادقة
+        function showAuthPage() {
+            authPage.style.display = 'flex';
+            registerPage.style.display = 'none';
+            mainPage.style.display = 'none';
+        }
+
+        // عرض صفحة التسجيل
+        function showRegisterPage() {
+            authPage.style.display = 'none';
+            registerPage.style.display = 'flex';
+            mainPage.style.display = 'none';
+        }
+
+        // عرض الصفحة الرئيسية
+        function showMainPage() {
+            authPage.style.display = 'none';
+            registerPage.style.display = 'none';
+            mainPage.style.display = 'block';
+            hideAllPages();
+        }
+
+        // إخفاء جميع الصفحات
+        function hideAllPages() {
+            document.querySelectorAll('.page').forEach(page => {
+                page.classList.remove('active');
+            });
+        }
+
+        // عرض صفحة البحث
+        function showSearchPage() {
+            hideAllPages();
+            searchPage.classList.add('active');
+        }
+
+        // عرض صفحة إنشاء منشور جديد
+        function showCreatePostPage() {
+            hideAllPages();
+            createPostPage.classList.add('active');
+        }
+
+        // عرض صفحة التعليقات
+        function showCommentsPage() {
+            hideAllPages();
+            commentsPage.classList.add('active');
+        }
+
+        // تسجيل الدخول
+        loginForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const email = document.getElementById('login-email').value;
+            const password = document.getElementById('login-password').value;
+            
+            const user = users.find(u => u.email === email && u.password === password);
+            
+            if (user) {
+                currentUser = user;
+                localStorage.setItem('aghrem_current_user', JSON.stringify(currentUser));
+                showMainPage();
+            } else {
+                document.getElementById('login-email-error').style.display = 'block';
+                document.getElementById('login-password-error').style.display = 'block';
+            }
+        });
+
+        // إنشاء حساب جديد
+        registerForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const name = document.getElementById('register-name').value;
+            const email = document.getElementById('register-email').value;
+            const password = document.getElementById('register-password').value;
+            const confirmPassword = document.getElementById('register-confirm-password').value;
+            
+            // التحقق من صحة البيانات
+            let isValid = true;
+            
+            if (password.length < 6) {
+                document.getElementById('register-password-error').style.display = 'block';
+                isValid = false;
+            } else {
+                document.getElementById('register-password-error').style.display = 'none';
+            }
+            
+            if (password !== confirmPassword) {
+                document.getElementById('register-confirm-error').style.display = 'block';
+                isValid = false;
+            } else {
+                document.getElementById('register-confirm-error').style.display = 'none';
+            }
+            
+            if (users.find(u => u.email === email)) {
+                document.getElementById('register-email-error').textContent = 'هذا البريد الإلكتروني مستخدم بالفعل';
+                document.getElementById('register-email-error').style.display = 'block';
+                isValid = false;
+            } else {
+                document.getElementById('register-email-error').style.display = 'none';
+            }
+            
+            if (isValid) {
+                const newUser = {
+                    id: users.length + 1,
+                    name: name,
+                    email: email,
+                    password: password,
+                    bio: "",
+                    verified: false
+                };
+                
+                users.push(newUser);
+                localStorage.setItem('aghrem_users', JSON.stringify(users));
+                
+                currentUser = newUser;
+                localStorage.setItem('aghrem_current_user', JSON.stringify(currentUser));
+                
+                showMainPage();
+            }
+        });
+
+        // نشر منشور جديد
+        function createNewPost(content) {
+            const newPost = {
+                id: posts.length + 1,
+                userId: currentUser.id,
+                content: content,
+                likes: 0,
+                comments: 0,
+                shares: 0,
+                timestamp: new Date().toISOString()
+            };
+            
+            posts.push(newPost);
+            localStorage.setItem('aghrem_posts', JSON.stringify(posts));
+            
+            // إعادة تحميل المنشورات
+            loadPosts();
+        }
+
+        // تحميل المنشورات
+        function loadPosts() {
+            // سيتم تنفيذ هذا في التطبيق الكامل
+        }
+
+        // إضافة تعليق
+        function addComment(postId, content) {
+            // سيتم تنفيذ هذا في التطبيق الكامل
+        }
+
+        // البحث
+        function searchUsers(query) {
+            // سيتم تنفيذ هذا في التطبيق الكامل
+        }
+
+        // إعداد معالجات الأحداث
+        showRegisterLink.addEventListener('click', function(e) {
+            e.preventDefault();
+            showRegisterPage();
+        });
+
+        showLoginLink.addEventListener('click', function(e) {
+            e.preventDefault();
+            showAuthPage();
+        });
+
+        searchInput.addEventListener('focus', function() {
+            showSearchPage();
+        });
+
+        homeIcon.addEventListener('click', function() {
+            showMainPage();
+        });
+
+        createPostIcon.addEventListener('click', function() {
+            showCreatePostPage();
+        });
+
+        profileIcon.addEventListener('click', function() {
+            // عرض الملف الشخصي (سيتم تنفيذه في التطبيق الكامل)
+            alert("عرض الملف الشخصي");
+        });
+
+        backFromSearch.addEventListener('click', function() {
+            showMainPage();
+        });
+
+        backFromCreate.addEventListener('click', function() {
+            showMainPage();
+        });
+
+        backFromComments.addEventListener('click', function() {
+            showMainPage();
+        });
+
+        publishPostBtn.addEventListener('click', function() {
+            const content = fullPostText.value.trim();
+            if (content) {
+                createNewPost(content);
+                fullPostText.value = '';
+                showMainPage();
+            }
+        });
+
+        commentPostBtn.addEventListener('click', function() {
+            showCommentsPage();
+        });
+
+        addCommentBtn.addEventListener('click', function() {
+            const content = newCommentText.value.trim();
+            if (content) {
+                addComment(1, content); // إضافة تعليق للمنشور الأول
+                newCommentText.value = '';
+                alert("تم إضافة التعليق بنجاح!");
+            }
+        });
+
+        // البدء بتطبيق الحالة
+        checkAuthStatus();
+    </script>
+</body>
+  </html>
