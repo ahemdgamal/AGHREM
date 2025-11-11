@@ -1,0 +1,1196 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AGHREM - شبكتك الاجتماعية</title>
+    <style>
+        /* جميع أنماط CSS السابقة تبقى كما هي */
+        /* ... (CSS code from previous implementation) ... */
+    </style>
+</head>
+<body>
+    <!-- جميع عناصر HTML السابقة تبقى كما هي -->
+    <!-- ... (HTML structure from previous implementation) ... -->
+
+    <script>
+        // ========== نظام إدارة الحالة والتخزين ==========
+        class AghremStorage {
+            constructor() {
+                this.users = this.loadFromStorage('aghrem_users') || this.initializeDefaultUsers();
+                this.posts = this.loadFromStorage('aghrem_posts') || this.initializeDefaultPosts();
+                this.comments = this.loadFromStorage('aghrem_comments') || [];
+                this.friends = this.loadFromStorage('aghrem_friends') || [];
+                this.currentUser = this.loadFromStorage('aghrem_current_user') || null;
+                this.notifications = this.loadFromStorage('aghrem_notifications') || [];
+            }
+
+            initializeDefaultUsers() {
+                const defaultUser = {
+                    id: 1,
+                    name: "أحمد جمال",
+                    email: "ahemdgamal95@gmail.com",
+                    password: "0195377553",
+                    bio: "Hello in AGHREM",
+                    profileImage: "أ",
+                    coverImage: "",
+                    verified: true,
+                    joinDate: new Date().toISOString(),
+                    friends: []
+                };
+                return [defaultUser];
+            }
+
+            initializeDefaultPosts() {
+                const defaultPost = {
+                    id: 1,
+                    userId: 1,
+                    userName: "أحمد جمال",
+                    userImage: "أ",
+                    content: "اللهم صلي علي سيدنا محمد",
+                    image: "",
+                    video: "",
+                    likes: 100000000,
+                    commentsCount: 10000,
+                    shares: 5000,
+                    timestamp: new Date().toISOString(),
+                    likedBy: [],
+                    sharedBy: []
+                };
+                return [defaultPost];
+            }
+
+            loadFromStorage(key) {
+                try {
+                    return JSON.parse(localStorage.getItem(key));
+                } catch (error) {
+                    console.error(`Error loading ${key}:`, error);
+                    return null;
+                }
+            }
+
+            saveToStorage(key, data) {
+                try {
+                    localStorage.setItem(key, JSON.stringify(data));
+                    return true;
+                } catch (error) {
+                    console.error(`Error saving ${key}:`, error);
+                    return false;
+                }
+            }
+
+            saveAll() {
+                this.saveToStorage('aghrem_users', this.users);
+                this.saveToStorage('aghrem_posts', this.posts);
+                this.saveToStorage('aghrem_comments', this.comments);
+                this.saveToStorage('aghrem_friends', this.friends);
+                this.saveToStorage('aghrem_current_user', this.currentUser);
+                this.saveToStorage('aghrem_notifications', this.notifications);
+            }
+        }
+
+        // ========== نظام إدارة المستخدمين ==========
+        class UserManager {
+            constructor(storage) {
+                this.storage = storage;
+            }
+
+            register(userData) {
+                return new Promise((resolve, reject) => {
+                    setTimeout(() => {
+                        // التحقق من وجود المستخدم مسبقاً
+                        const existingUser = this.storage.users.find(user => 
+                            user.email === userData.email
+                        );
+
+                        if (existingUser) {
+                            reject({ success: false, message: "البريد الإلكتروني مستخدم بالفعل" });
+                            return;
+                        }
+
+                        // إنشاء مستخدم جديد
+                        const newUser = {
+                            id: this.storage.users.length + 1,
+                            ...userData,
+                            profileImage: userData.name.charAt(0),
+                            verified: false,
+                            joinDate: new Date().toISOString(),
+                            friends: []
+                        };
+
+                        this.storage.users.push(newUser);
+                        this.storage.saveAll();
+
+                        resolve({ 
+                            success: true, 
+                            message: "تم إنشاء الحساب بنجاح",
+                            user: newUser 
+                        });
+                    }, 1000);
+                });
+            }
+
+            login(email, password) {
+                return new Promise((resolve, reject) => {
+                    setTimeout(() => {
+                        const user = this.storage.users.find(user => 
+                            user.email === email && user.password === password
+                        );
+
+                        if (user) {
+                            this.storage.currentUser = user;
+                            this.storage.saveAll();
+                            resolve({ 
+                                success: true, 
+                                message: "تم تسجيل الدخول بنجاح",
+                                user: user 
+                            });
+                        } else {
+                            reject({ 
+                                success: false, 
+                                message: "البريد الإلكتروني أو كلمة المرور غير صحيحة" 
+                            });
+                        }
+                    }, 800);
+                });
+            }
+
+            logout() {
+                this.storage.currentUser = null;
+                this.storage.saveAll();
+                return { success: true, message: "تم تسجيل الخروج" };
+            }
+
+            updateProfile(userId, updates) {
+                const userIndex = this.storage.users.findIndex(user => user.id === userId);
+                if (userIndex !== -1) {
+                    this.storage.users[userIndex] = { ...this.storage.users[userIndex], ...updates };
+                    if (this.storage.currentUser && this.storage.currentUser.id === userId) {
+                        this.storage.currentUser = this.storage.users[userIndex];
+                    }
+                    this.storage.saveAll();
+                    return { success: true, message: "تم تحديث الملف الشخصي" };
+                }
+                return { success: false, message: "المستخدم غير موجود" };
+            }
+        }
+
+        // ========== نظام إدارة المنشورات ==========
+        class PostManager {
+            constructor(storage) {
+                this.storage = storage;
+            }
+
+            createPost(postData) {
+                return new Promise((resolve, reject) => {
+                    setTimeout(() => {
+                        if (!this.storage.currentUser) {
+                            reject({ success: false, message: "يجب تسجيل الدخول أولاً" });
+                            return;
+                        }
+
+                        const newPost = {
+                            id: this.storage.posts.length + 1,
+                            userId: this.storage.currentUser.id,
+                            userName: this.storage.currentUser.name,
+                            userImage: this.storage.currentUser.profileImage,
+                            ...postData,
+                            likes: 0,
+                            commentsCount: 0,
+                            shares: 0,
+                            timestamp: new Date().toISOString(),
+                            likedBy: [],
+                            sharedBy: []
+                        };
+
+                        this.storage.posts.unshift(newPost); // إضافة في البداية
+                        this.storage.saveAll();
+
+                        resolve({ 
+                            success: true, 
+                            message: "تم نشر المنشور بنجاح",
+                            post: newPost 
+                        });
+                    }, 500);
+                });
+            }
+
+            getPosts(limit = 10, offset = 0) {
+                return new Promise((resolve) => {
+                    setTimeout(() => {
+                        const posts = this.storage.posts.slice(offset, offset + limit);
+                        resolve({ 
+                            success: true, 
+                            posts: posts,
+                            hasMore: this.storage.posts.length > offset + limit
+                        });
+                    }, 300);
+                });
+            }
+
+            likePost(postId) {
+                return new Promise((resolve, reject) => {
+                    setTimeout(() => {
+                        if (!this.storage.currentUser) {
+                            reject({ success: false, message: "يجب تسجيل الدخول أولاً" });
+                            return;
+                        }
+
+                        const post = this.storage.posts.find(p => p.id === postId);
+                        if (!post) {
+                            reject({ success: false, message: "المنشور غير موجود" });
+                            return;
+                        }
+
+                        const userIndex = post.likedBy.indexOf(this.storage.currentUser.id);
+                        
+                        if (userIndex === -1) {
+                            // إعجاب جديد
+                            post.likedBy.push(this.storage.currentUser.id);
+                            post.likes++;
+                        } else {
+                            // إلغاء الإعجاب
+                            post.likedBy.splice(userIndex, 1);
+                            post.likes--;
+                        }
+
+                        this.storage.saveAll();
+
+                        resolve({ 
+                            success: true, 
+                            likes: post.likes,
+                            isLiked: userIndex === -1
+                        });
+                    }, 200);
+                });
+            }
+
+            sharePost(postId) {
+                return new Promise((resolve, reject) => {
+                    setTimeout(() => {
+                        if (!this.storage.currentUser) {
+                            reject({ success: false, message: "يجب تسجيل الدخول أولاً" });
+                            return;
+                        }
+
+                        const post = this.storage.posts.find(p => p.id === postId);
+                        if (!post) {
+                            reject({ success: false, message: "المنشور غير موجود" });
+                            return;
+                        }
+
+                        post.sharedBy.push(this.storage.currentUser.id);
+                        post.shares++;
+
+                        // إنشاء منشور جديد كمشاركة
+                        const sharedPost = {
+                            id: this.storage.posts.length + 1,
+                            userId: this.storage.currentUser.id,
+                            userName: this.storage.currentUser.name,
+                            userImage: this.storage.currentUser.profileImage,
+                            content: `شارك منشور ${post.userName}`,
+                            originalPostId: postId,
+                            likes: 0,
+                            commentsCount: 0,
+                            shares: 0,
+                            timestamp: new Date().toISOString(),
+                            likedBy: [],
+                            sharedBy: []
+                        };
+
+                        this.storage.posts.unshift(sharedPost);
+                        this.storage.saveAll();
+
+                        resolve({ 
+                            success: true, 
+                            shares: post.shares,
+                            sharedPost: sharedPost
+                        });
+                    }, 300);
+                });
+            }
+        }
+
+        // ========== نظام إدارة التعليقات ==========
+        class CommentManager {
+            constructor(storage) {
+                this.storage = storage;
+            }
+
+            addComment(postId, content) {
+                return new Promise((resolve, reject) => {
+                    setTimeout(() => {
+                        if (!this.storage.currentUser) {
+                            reject({ success: false, message: "يجب تسجيل الدخول أولاً" });
+                            return;
+                        }
+
+                        const post = this.storage.posts.find(p => p.id === postId);
+                        if (!post) {
+                            reject({ success: false, message: "المنشور غير موجود" });
+                            return;
+                        }
+
+                        const newComment = {
+                            id: this.storage.comments.length + 1,
+                            postId: postId,
+                            userId: this.storage.currentUser.id,
+                            userName: this.storage.currentUser.name,
+                            userImage: this.storage.currentUser.profileImage,
+                            content: content,
+                            timestamp: new Date().toISOString(),
+                            likes: 0
+                        };
+
+                        this.storage.comments.push(newComment);
+                        post.commentsCount++;
+                        this.storage.saveAll();
+
+                        resolve({ 
+                            success: true, 
+                            message: "تم إضافة التعليق بنجاح",
+                            comment: newComment 
+                        });
+                    }, 400);
+                });
+            }
+
+            getComments(postId) {
+                return new Promise((resolve) => {
+                    setTimeout(() => {
+                        const comments = this.storage.comments
+                            .filter(comment => comment.postId === postId)
+                            .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+
+                        resolve({ 
+                            success: true, 
+                            comments: comments 
+                        });
+                    }, 200);
+                });
+            }
+        }
+
+        // ========== نظام البحث ==========
+        class SearchManager {
+            constructor(storage) {
+                this.storage = storage;
+            }
+
+            searchUsers(query) {
+                return new Promise((resolve) => {
+                    setTimeout(() => {
+                        if (!query.trim()) {
+                            resolve({ success: true, results: [] });
+                            return;
+                        }
+
+                        const results = this.storage.users.filter(user => 
+                            user.name.toLowerCase().includes(query.toLowerCase()) ||
+                            user.email.toLowerCase().includes(query.toLowerCase())
+                        );
+
+                        resolve({ 
+                            success: true, 
+                            results: results.map(user => ({
+                                id: user.id,
+                                name: user.name,
+                                email: user.email,
+                                profileImage: user.profileImage,
+                                bio: user.bio
+                            }))
+                        });
+                    }, 500);
+                });
+            }
+
+            searchPosts(query) {
+                return new Promise((resolve) => {
+                    setTimeout(() => {
+                        if (!query.trim()) {
+                            resolve({ success: true, results: [] });
+                            return;
+                        }
+
+                        const results = this.storage.posts.filter(post => 
+                            post.content.toLowerCase().includes(query.toLowerCase())
+                        );
+
+                        resolve({ 
+                            success: true, 
+                            results: results 
+                        });
+                    }, 400);
+                });
+            }
+        }
+
+        // ========== نظام الإشعارات ==========
+        class NotificationManager {
+            constructor(storage) {
+                this.storage = storage;
+            }
+
+            addNotification(userId, type, data) {
+                const notification = {
+                    id: this.storage.notifications.length + 1,
+                    userId: userId,
+                    type: type, // 'like', 'comment', 'friend_request', 'share'
+                    data: data,
+                    timestamp: new Date().toISOString(),
+                    read: false
+                };
+
+                this.storage.notifications.push(notification);
+                this.storage.saveAll();
+                return notification;
+            }
+
+            getNotifications(userId) {
+                return this.storage.notifications
+                    .filter(notif => notif.userId === userId)
+                    .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+            }
+
+            markAsRead(notificationId) {
+                const notification = this.storage.notifications.find(n => n.id === notificationId);
+                if (notification) {
+                    notification.read = true;
+                    this.storage.saveAll();
+                }
+            }
+        }
+
+        // ========== نظام إدارة الصداقات ==========
+        class FriendManager {
+            constructor(storage) {
+                this.storage = storage;
+            }
+
+            sendFriendRequest(fromUserId, toUserId) {
+                return new Promise((resolve, reject) => {
+                    setTimeout(() => {
+                        if (fromUserId === toUserId) {
+                            reject({ success: false, message: "لا يمكن إرسال طلب صداقة لنفسك" });
+                            return;
+                        }
+
+                        const existingRequest = this.storage.friends.find(f => 
+                            f.fromUserId === fromUserId && f.toUserId === toUserId
+                        );
+
+                        if (existingRequest) {
+                            reject({ success: false, message: "تم إرسال طلب الصداقة مسبقاً" });
+                            return;
+                        }
+
+                        const friendRequest = {
+                            id: this.storage.friends.length + 1,
+                            fromUserId: fromUserId,
+                            toUserId: toUserId,
+                            status: 'pending', // pending, accepted, rejected
+                            timestamp: new Date().toISOString()
+                        };
+
+                        this.storage.friends.push(friendRequest);
+                        this.storage.saveAll();
+
+                        resolve({ 
+                            success: true, 
+                            message: "تم إرسال طلب الصداقة",
+                            request: friendRequest 
+                        });
+                    }, 600);
+                });
+            }
+
+            acceptFriendRequest(requestId) {
+                return new Promise((resolve, reject) => {
+                    setTimeout(() => {
+                        const request = this.storage.friends.find(f => f.id === requestId);
+                        if (!request) {
+                            reject({ success: false, message: "طلب الصداقة غير موجود" });
+                            return;
+                        }
+
+                        request.status = 'accepted';
+                        
+                        // إضافة الأصدقاء لبعضهما
+                        const fromUser = this.storage.users.find(u => u.id === request.fromUserId);
+                        const toUser = this.storage.users.find(u => u.id === request.toUserId);
+                        
+                        if (fromUser && toUser) {
+                            if (!fromUser.friends.includes(request.toUserId)) {
+                                fromUser.friends.push(request.toUserId);
+                            }
+                            if (!toUser.friends.includes(request.fromUserId)) {
+                                toUser.friends.push(request.fromUserId);
+                            }
+                        }
+
+                        this.storage.saveAll();
+
+                        resolve({ 
+                            success: true, 
+                            message: "تم قبول طلب الصداقة",
+                            request: request 
+                        });
+                    }, 400);
+                });
+            }
+
+            getFriends(userId) {
+                const user = this.storage.users.find(u => u.id === userId);
+                if (!user) return [];
+
+                return this.storage.users.filter(u => 
+                    user.friends.includes(u.id)
+                );
+            }
+        }
+
+        // ========== تطبيق AGHREM الرئيسي ==========
+        class AghremApp {
+            constructor() {
+                this.storage = new AghremStorage();
+                this.userManager = new UserManager(this.storage);
+                this.postManager = new PostManager(this.storage);
+                this.commentManager = new CommentManager(this.storage);
+                this.searchManager = new SearchManager(this.storage);
+                this.notificationManager = new NotificationManager(this.storage);
+                this.friendManager = new FriendManager(this.storage);
+                
+                this.currentPage = 'auth';
+                this.init();
+            }
+
+            init() {
+                this.bindEvents();
+                this.checkAuthStatus();
+                this.loadInitialData();
+            }
+
+            bindEvents() {
+                // أحداث تسجيل الدخول والتسجيل
+                document.getElementById('login-form').addEventListener('submit', (e) => this.handleLogin(e));
+                document.getElementById('register-form').addEventListener('submit', (e) => this.handleRegister(e));
+                
+                // أحداث التنقل
+                document.getElementById('show-register').addEventListener('click', (e) => this.showPage('register', e));
+                document.getElementById('show-login').addEventListener('click', (e) => this.showPage('auth', e));
+                
+                // أحداث الشريط العلوي
+                document.getElementById('search-input').addEventListener('input', (e) => this.handleSearch(e));
+                document.getElementById('home-icon').addEventListener('click', () => this.showPage('main'));
+                document.getElementById('create-post-icon').addEventListener('click', () => this.showPage('create-post'));
+                document.getElementById('profile-icon').addEventListener('click', () => this.showPage('profile'));
+                
+                // أحداث الرجوع
+                document.getElementById('back-from-search').addEventListener('click', () => this.showPage('main'));
+                document.getElementById('back-from-create').addEventListener('click', () => this.showPage('main'));
+                document.getElementById('back-from-comments').addEventListener('click', () => this.showPage('main'));
+                
+                // أحداث المنشورات
+                document.getElementById('publish-post').addEventListener('click', () => this.handleCreatePost());
+                document.getElementById('like-post').addEventListener('click', () => this.handleLikePost(1));
+                document.getElementById('comment-post').addEventListener('click', () => this.showComments(1));
+                document.getElementById('share-post').addEventListener('click', () => this.handleSharePost(1));
+                document.getElementById('add-comment-btn').addEventListener('click', () => this.handleAddComment());
+                
+                // أحداث القائمة الجانبية
+                document.querySelectorAll('.sidebar-menu li').forEach(item => {
+                    item.addEventListener('click', () => {
+                        const pageMap = {
+                            'menu-profile': 'profile',
+                            'menu-friends': 'friends',
+                            'menu-groups': 'groups',
+                            'menu-messages': 'messages',
+                            'menu-events': 'events'
+                        };
+                        this.showPage(pageMap[item.id]);
+                    });
+                });
+
+                // إدخال النص في حقل المنشور الرئيسي
+                document.getElementById('new-post-text').addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') {
+                        this.handleQuickPost();
+                    }
+                });
+            }
+
+            async handleLogin(e) {
+                e.preventDefault();
+                const email = document.getElementById('login-email').value;
+                const password = document.getElementById('login-password').value;
+
+                try {
+                    this.showLoading('جاري تسجيل الدخول...');
+                    const result = await this.userManager.login(email, password);
+                    this.hideLoading();
+                    
+                    if (result.success) {
+                        this.showNotification('تم تسجيل الدخول بنجاح', 'success');
+                        this.showPage('main');
+                        this.loadUserData();
+                    }
+                } catch (error) {
+                    this.hideLoading();
+                    this.showNotification(error.message, 'error');
+                    this.showError('login-email-error', error.message);
+                    this.showError('login-password-error', error.message);
+                }
+            }
+
+            async handleRegister(e) {
+                e.preventDefault();
+                const name = document.getElementById('register-name').value;
+                const email = document.getElementById('register-email').value;
+                const password = document.getElementById('register-password').value;
+                const confirmPassword = document.getElementById('register-confirm-password').value;
+
+                // التحقق من صحة البيانات
+                if (password !== confirmPassword) {
+                    this.showError('register-confirm-error', 'كلمتا المرور غير متطابقتين');
+                    return;
+                }
+
+                if (password.length < 6) {
+                    this.showError('register-password-error', 'كلمة المرور يجب أن تكون 6 أحرف على الأقل');
+                    return;
+                }
+
+                try {
+                    this.showLoading('جاري إنشاء الحساب...');
+                    const result = await this.userManager.register({
+                        name,
+                        email,
+                        password,
+                        bio: "Hello in AGHREM"
+                    });
+                    this.hideLoading();
+                    
+                    if (result.success) {
+                        this.showNotification('تم إنشاء الحساب بنجاح', 'success');
+                        this.showPage('main');
+                        this.loadUserData();
+                    }
+                } catch (error) {
+                    this.hideLoading();
+                    this.showNotification(error.message, 'error');
+                    if (error.message.includes('البريد')) {
+                        this.showError('register-email-error', error.message);
+                    }
+                }
+            }
+
+            async handleCreatePost() {
+                const content = document.getElementById('full-post-text').value.trim();
+                if (!content) {
+                    this.showNotification('يرجى كتابة محتوى للمنشور', 'warning');
+                    return;
+                }
+
+                try {
+                    this.showLoading('جاري نشر المنشور...');
+                    const result = await this.postManager.createPost({ content });
+                    this.hideLoading();
+                    
+                    if (result.success) {
+                        this.showNotification('تم نشر المنشور بنجاح', 'success');
+                        this.showPage('main');
+                        this.loadPosts();
+                        document.getElementById('full-post-text').value = '';
+                    }
+                } catch (error) {
+                    this.hideLoading();
+                    this.showNotification(error.message, 'error');
+                }
+            }
+
+            async handleQuickPost() {
+                const content = document.getElementById('new-post-text').value.trim();
+                if (!content) return;
+
+                try {
+                    const result = await this.postManager.createPost({ content });
+                    if (result.success) {
+                        this.showNotification('تم نشر المنشور بنجاح', 'success');
+                        this.loadPosts();
+                        document.getElementById('new-post-text').value = '';
+                    }
+                } catch (error) {
+                    this.showNotification(error.message, 'error');
+                }
+            }
+
+            async handleLikePost(postId) {
+                try {
+                    const result = await this.postManager.likePost(postId);
+                    if (result.success) {
+                        this.updatePostLikes(postId, result.likes, result.isLiked);
+                        
+                        // إضافة إشعار إذا كان الإعجاب من مستخدم آخر
+                        const post = this.storage.posts.find(p => p.id === postId);
+                        if (post && post.userId !== this.storage.currentUser.id) {
+                            this.notificationManager.addNotification(
+                                post.userId,
+                                'like',
+                                {
+                                    fromUserId: this.storage.currentUser.id,
+                                    fromUserName: this.storage.currentUser.name,
+                                    postId: postId
+                                }
+                            );
+                        }
+                    }
+                } catch (error) {
+                    this.showNotification(error.message, 'error');
+                }
+            }
+
+            async handleSharePost(postId) {
+                try {
+                    const result = await this.postManager.sharePost(postId);
+                    if (result.success) {
+                        this.showNotification('تم مشاركة المنشور بنجاح', 'success');
+                        this.loadPosts();
+                        
+                        // إضافة إشعار
+                        const post = this.storage.posts.find(p => p.id === postId);
+                        if (post && post.userId !== this.storage.currentUser.id) {
+                            this.notificationManager.addNotification(
+                                post.userId,
+                                'share',
+                                {
+                                    fromUserId: this.storage.currentUser.id,
+                                    fromUserName: this.storage.currentUser.name,
+                                    postId: postId
+                                }
+                            );
+                        }
+                    }
+                } catch (error) {
+                    this.showNotification(error.message, 'error');
+                }
+            }
+
+            async handleAddComment() {
+                const content = document.getElementById('new-comment-text').value.trim();
+                if (!content) {
+                    this.showNotification('يرجى كتابة تعليق', 'warning');
+                    return;
+                }
+
+                try {
+                    this.showLoading('جاري إضافة التعليق...');
+                    const result = await this.commentManager.addComment(1, content); // استخدام المنشور الأول
+                    this.hideLoading();
+                    
+                    if (result.success) {
+                        this.showNotification('تم إضافة التعليق بنجاح', 'success');
+                        document.getElementById('new-comment-text').value = '';
+                        this.loadComments(1);
+                        
+                        // إضافة إشعار
+                        const post = this.storage.posts.find(p => p.id === 1);
+                        if (post && post.userId !== this.storage.currentUser.id) {
+                            this.notificationManager.addNotification(
+                                post.userId,
+                                'comment',
+                                {
+                                    fromUserId: this.storage.currentUser.id,
+                                    fromUserName: this.storage.currentUser.name,
+                                    postId: 1,
+                                    comment: content.substring(0, 50) + '...'
+                                }
+                            );
+                        }
+                    }
+                } catch (error) {
+                    this.hideLoading();
+                    this.showNotification(error.message, 'error');
+                }
+            }
+
+            async handleSearch(e) {
+                const query = e.target.value.trim();
+                if (query.length < 2) return;
+
+                try {
+                    const results = await this.searchManager.searchUsers(query);
+                    this.displaySearchResults(results.results);
+                } catch (error) {
+                    console.error('Search error:', error);
+                }
+            }
+
+            // ========== طرق المساعدة ==========
+            showPage(pageName, e = null) {
+                if (e) e.preventDefault();
+                
+                // إخفاء جميع الصفحات
+                document.querySelectorAll('.auth-container, #main-page, .page').forEach(el => {
+                    el.style.display = 'none';
+                });
+
+                // إظهار الصفحة المطلوبة
+                switch (pageName) {
+                    case 'auth':
+                        document.getElementById('auth-page').style.display = 'flex';
+                        break;
+                    case 'register':
+                        document.getElementById('register-page').style.display = 'flex';
+                        break;
+                    case 'main':
+                        document.getElementById('main-page').style.display = 'block';
+                        this.hideAllPages();
+                        break;
+                    case 'search':
+                        document.getElementById('search-page').classList.add('active');
+                        break;
+                    case 'create-post':
+                        document.getElementById('create-post-page').classList.add('active');
+                        break;
+                    case 'comments':
+                        document.getElementById('comments-page').classList.add('active');
+                        break;
+                    default:
+                        document.getElementById('main-page').style.display = 'block';
+                        this.hideAllPages();
+                }
+
+                this.currentPage = pageName;
+            }
+
+            hideAllPages() {
+                document.querySelectorAll('.page').forEach(page => {
+                    page.classList.remove('active');
+                });
+            }
+
+            checkAuthStatus() {
+                if (this.storage.currentUser) {
+                    this.showPage('main');
+                    this.loadUserData();
+                } else {
+                    this.showPage('auth');
+                }
+            }
+
+            loadInitialData() {
+                if (this.storage.currentUser) {
+                    this.loadUserData();
+                    this.loadPosts();
+                    this.loadNotifications();
+                }
+            }
+
+            loadUserData() {
+                if (!this.storage.currentUser) return;
+
+                // تحديث بيانات المستخدم في الواجهة
+                const profileElements = document.querySelectorAll('.profile-name, .post-user');
+                profileElements.forEach(el => {
+                    if (el.classList.contains('profile-name') || el.classList.contains('post-user')) {
+                        el.textContent = this.storage.currentUser.name;
+                    }
+                });
+
+                const profileImages = document.querySelectorAll('.profile-img, .user-avatar');
+                profileImages.forEach(img => {
+                    if (img.classList.contains('profile-img') || img.classList.contains('user-avatar')) {
+                        img.textContent = this.storage.currentUser.profileImage;
+                    }
+                });
+
+                const bioElement = document.querySelector('.profile-bio');
+                if (bioElement) {
+                    bioElement.textContent = this.storage.currentUser.bio;
+                }
+            }
+
+            async loadPosts() {
+                try {
+                    const result = await this.postManager.getPosts(10, 0);
+                    if (result.success) {
+                        this.displayPosts(result.posts);
+                    }
+                } catch (error) {
+                    console.error('Error loading posts:', error);
+                }
+            }
+
+            async loadComments(postId) {
+                try {
+                    const result = await this.commentManager.getComments(postId);
+                    if (result.success) {
+                        this.displayComments(result.comments);
+                    document.getElementById('comments-count').textContent = result.comments.length;
+                    document.getElementById('comments-count-2').textContent = result.comments.length;
+                    document.getElementById('comments-count-3').textContent = result.comments.length;
+                }
+                } catch (error) {
+                    console.error('Error loading comments:', error);
+                }
+            }
+
+            async loadNotifications() {
+                if (!this.storage.currentUser) return;
+                
+                const notifications = this.notificationManager.getNotifications(this.storage.currentUser.id);
+                this.displayNotifications(notifications);
+            }
+
+            displayPosts(posts) {
+                const feedContainer = document.querySelector('.feed');
+                if (!feedContainer) return;
+
+                // الحفاظ على منشور الإنشاء
+                const createPostElement = feedContainer.querySelector('.create-post');
+                feedContainer.innerHTML = '';
+                if (createPostElement) {
+                    feedContainer.appendChild(createPostElement);
+                }
+
+                posts.forEach(post => {
+                    const postElement = this.createPostElement(post);
+                    feedContainer.appendChild(postElement);
+                });
+            }
+
+            createPostElement(post) {
+                const postDiv = document.createElement('div');
+                postDiv.className = 'post fade-in';
+                postDiv.innerHTML = `
+                    <div class="post-header">
+                        <div class="user-avatar">${post.userImage}</div>
+                        <div>
+                            <div class="post-user">${post.userName}</div>
+                            <div class="post-time">${this.formatTime(post.timestamp)}</div>
+                        </div>
+                    </div>
+                    <div class="post-content">${post.content}</div>
+                    ${post.image ? `<img src="${post.image}" class="post-image" alt="صورة المنشور">` : ''}
+                    <div class="post-stats">
+                        <div>${this.formatNumber(post.likes)} إعجاب</div>
+                        <div>${this.formatNumber(post.commentsCount)} تعليق</div>
+                        <div>${this.formatNumber(post.shares)} مشاركة</div>
+                    </div>
+                    <div class="post-actions">
+                        <div class="post-action like-btn" data-post-id="${post.id}">
+                            <span>👍</span> أعجبني
+                        </div>
+                        <div class="post-action comment-btn" data-post-id="${post.id}">
+                            <span>💬</span> تعليق
+                        </div>
+                        <div class="post-action share-btn" data-post-id="${post.id}">
+                            <span>🔄</span> مشاركة
+                        </div>
+                    </div>
+                `;
+
+                // ربط الأحداث
+                postDiv.querySelector('.like-btn').addEventListener('click', () => 
+                    this.handleLikePost(post.id)
+                );
+                postDiv.querySelector('.comment-btn').addEventListener('click', () => 
+                    this.showComments(post.id)
+                );
+                postDiv.querySelector('.share-btn').addEventListener('click', () => 
+                    this.handleSharePost(post.id)
+                );
+
+                return postDiv;
+            }
+
+            displayComments(comments) {
+                const commentsContainer = document.querySelector('.comments-list');
+                if (!commentsContainer) return;
+
+                commentsContainer.innerHTML = '';
+                comments.forEach(comment => {
+                    const commentElement = this.createCommentElement(comment);
+                    commentsContainer.appendChild(commentElement);
+                });
+            }
+
+            createCommentElement(comment) {
+                const commentDiv = document.createElement('div');
+                commentDiv.className = 'comment fade-in';
+                commentDiv.innerHTML = `
+                    <div class="post-header">
+                        <div class="user-avatar">${comment.userImage}</div>
+                        <div>
+                            <div class="post-user">${comment.userName}</div>
+                            <div class="post-time">${this.formatTime(comment.timestamp)}</div>
+                        </div>
+                    </div>
+                    <div class="post-content">${comment.content}</div>
+                `;
+                return commentDiv;
+            }
+
+            displaySearchResults(results) {
+                const resultsContainer = document.querySelector('.search-results');
+                if (!resultsContainer) return;
+
+                resultsContainer.innerHTML = '';
+                results.forEach(user => {
+                    const userElement = this.createUserSearchResult(user);
+                    resultsContainer.appendChild(userElement);
+                });
+            }
+
+            createUserSearchResult(user) {
+                const userDiv = document.createElement('div');
+                userDiv.className = 'contact-item';
+                userDiv.innerHTML = `
+                    <div class="contact-avatar">${user.profileImage}</div>
+                    <div>
+                        <div class="post-user">${user.name}</div>
+                        <div class="post-time">${user.bio || 'لا يوجد وصف'}</div>
+                    </div>
+                `;
+                userDiv.addEventListener('click', () => this.viewUserProfile(user.id));
+                return userDiv;
+            }
+
+            displayNotifications(notifications) {
+                // تنفيذ عرض الإشعارات في الواجهة
+                console.log('Notifications:', notifications);
+            }
+
+            showComments(postId) {
+                this.showPage('comments');
+                this.loadComments(postId);
+            }
+
+            viewUserProfile(userId) {
+                // تنفيذ عرض الملف الشخصي للمستخدم
+                this.showNotification('جاري تحميل الملف الشخصي...', 'info');
+            }
+
+            showNotification(message, type = 'info') {
+                // إنشاء عنصر الإشعار
+                const notification = document.createElement('div');
+                notification.className = `notification notification-${type}`;
+                notification.style.cssText = `
+                    position: fixed;
+                    top: 20px;
+                    right: 20px;
+                    background: ${type === 'success' ? '#4CAF50' : type === 'error' ? '#f44336' : type === 'warning' ? '#ff9800' : '#2196F3'};
+                    color: white;
+                    padding: 15px 20px;
+                    border-radius: 5px;
+                    z-index: 1000;
+                    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+                    animation: slideIn 0.3s ease-out;
+                `;
+                notification.textContent = message;
+
+                document.body.appendChild(notification);
+
+                // إزالة الإشعار بعد 3 ثوان
+                setTimeout(() => {
+                    notification.style.animation = 'slideOut 0.3s ease-in';
+                    setTimeout(() => {
+                        if (notification.parentNode) {
+                            notification.parentNode.removeChild(notification);
+                        }
+                    }, 300);
+                }, 3000);
+            }
+
+            showLoading(message = 'جاري التحميل...') {
+                // تنفيذ عرض مؤشر التحميل
+                console.log('Loading:', message);
+            }
+
+            hideLoading() {
+                // إخفاء مؤشر التحميل
+                console.log('Loading hidden');
+            }
+
+            showError(elementId, message) {
+                const element = document.getElementById(elementId);
+                if (element) {
+                    element.textContent = message;
+                    element.style.display = 'block';
+                }
+            }
+
+            hideError(elementId) {
+                const element = document.getElementById(elementId);
+                if (element) {
+                    element.style.display = 'none';
+                }
+            }
+
+            formatTime(timestamp) {
+                const now = new Date();
+                const postTime = new Date(timestamp);
+                const diff = now - postTime;
+
+                const minutes = Math.floor(diff / 60000);
+                const hours = Math.floor(diff / 3600000);
+                const days = Math.floor(diff / 86400000);
+
+                if (minutes < 1) return 'الآن';
+                if (minutes < 60) return `منذ ${minutes} دقيقة`;
+                if (hours < 24) return `منذ ${hours} ساعة`;
+                if (days < 7) return `منذ ${days} يوم`;
+                
+                return postTime.toLocaleDateString('ar-EG');
+            }
+
+            formatNumber(num) {
+                if (num >= 1000000) {
+                    return (num / 1000000).toFixed(1) + 'M';
+                } else if (num >= 1000) {
+                    return (num / 1000).toFixed(1) + 'K';
+                }
+                return num.toString();
+            }
+
+            updatePostLikes(postId, likes, isLiked) {
+                const postElement = document.querySelector(`[data-post-id="${postId}"]`);
+                if (postElement) {
+                    const statsElement = postElement.closest('.post').querySelector('.post-stats');
+                    if (statsElement) {
+                        statsElement.querySelector('div:first-child').textContent = 
+                            `${this.formatNumber(likes)} إعجاب`;
+                    }
+
+                    const likeBtn = postElement.closest('.post').querySelector('.like-btn');
+                    if (likeBtn) {
+                        likeBtn.style.color = isLiked ? '#1877f2' : '';
+                    }
+                }
+            }
+        }
+
+        // بدء تشغيل التطبيق
+        document.addEventListener('DOMContentLoaded', () => {
+            window.aghremApp = new AghremApp();
+        });
+
+        // إضافة أنيميشن للإشعارات
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes slideIn {
+                from { transform: translateX(100%); opacity: 0; }
+                to { transform: translateX(0); opacity: 1; }
+            }
+            @keyframes slideOut {
+                from { transform: translateX(0); opacity: 1; }
+                to { transform: translateX(100%); opacity: 0; }
+            }
+            .fade-in {
+                animation: fadeIn 0.5s ease-in-out;
+            }
+        `;
+        document.head.appendChild(style);
+    </script>
+</body>
+</html>
